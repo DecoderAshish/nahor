@@ -42,12 +42,6 @@ const Basket = () => {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    getBasket(user.email);
-    setRefreshing(false);
-  };
-
   const getAddress = async () => {
     try {
       const addressDocRef = doc(db, "address", user.email);
@@ -68,16 +62,16 @@ const Basket = () => {
     }
   };
 
-  const getBasket = async (email) => {
-    onAuthStateChanged(auth, (authUser) => {
-      if (authUser) {
-        setUser(authUser);
-      } else {
-        console.log("User is signed out.");
-      }
-    });
+  const getBasket = async () => {
+    // onAuthStateChanged(auth, (authUser) => {
+    //   if (authUser) {
+    //     setUser(authUser);
+    //   } else {
+    //     console.log("User is signed out.");
+    //   }
+    // });
 
-    const q = query(collection(db, "users", email, "basket"));
+    const q = query(collection(db, "users", user.email, "basket"));
     onSnapshot(q, async (querySnapshot) => {
       const countedDocs = querySnapshot.size;
       const basketData = querySnapshot.docs.map((doc) => doc.data());
@@ -107,7 +101,7 @@ const Basket = () => {
     await deleteDoc(doc(subCollRef, "product" + pId))
       .then(() => {
         ToastAndroid.show("Removed from basket.", ToastAndroid.BOTTOM);
-        getBasket(user.email);
+        getBasket();
       })
       .catch((err) => {
         ToastAndroid.show("Something went wrong.", ToastAndroid.BOTTOM);
@@ -133,19 +127,27 @@ const Basket = () => {
     deleteField(doc(collection(db, "users", user.email)), "basket");
 
     ToastAndroid.show("Order Placed.", ToastAndroid.BOTTOM);
-    getBasket(user.email);
+    getBasket();
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    getBasket();
+    getAddress();
+    setRefreshing(false);
   };
 
   useEffect(() => {
     onAuthStateChanged(auth, (authUser) => {
       if (authUser) {
         setUser(authUser);
-        getBasket(authUser.email);
+        getBasket();
+        getAddress();
       } else {
         console.log("User is signed out.");
       }
     });
-    getAddress();
+
     onRefresh();
   }, []);
 

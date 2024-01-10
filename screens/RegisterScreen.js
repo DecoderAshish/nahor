@@ -192,7 +192,7 @@ const RegisterScreen = ({ navigation }) => {
             }}
           >
             <Image
-              source={require("../images/facebook.png")}
+              source={require("../images/apple.png")}
               style={{ height: 24, width: 24 }}
             />
           </TouchableOpacity>
