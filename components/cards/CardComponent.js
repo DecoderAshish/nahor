@@ -14,9 +14,9 @@ const CardComponent = ({ id, imageSource, title, description }) => {
 
   const getImages = () => {
     AWS.config.update({
-      accessKeyId: "***************",
-      secretAccessKey: "****************",
-      region: "*************",
+      accessKeyId: "AKIAZLRNTB3H7QGOH4VB",
+      secretAccessKey: "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",
+      region: "ap-south-1",
     });
 
     const s3 = new AWS.S3();

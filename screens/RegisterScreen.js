@@ -5,10 +5,14 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Alert,
   Image,
   ToastAndroid,
 } from "react-native";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,11 +22,31 @@ import { auth, db } from "../config/firebase";
 
 import CustomButton from "../components/CustomButton";
 import InputField from "../components/InputField";
+import { googleSignIn } from "./GoogleAuth";
 
 const RegisterScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [user, setUser] = useState("");
+
+  const googleAuth = async () => {
+    console.log("Google Auth");
+    const result = await googleSignIn();
+
+    if (result) {
+      console.log("Google sign-in success:", result.params);
+      Alert.alert("Logged in.", "Google sign-in success: " + result);
+      setUser(result.user);
+    } else {
+      console.log("Google sign-in failed");
+      Alert.alert("Login failed.", "Google sign-in failed");
+    }
+  };
+
+  const facebookAuth = () => {
+    console.log("Facebook Auth");
+  };
 
   const pressRegister = () => {
     setIsLoading(true);
@@ -73,6 +97,17 @@ const RegisterScreen = ({ navigation }) => {
       });
   };
 
+  // useEffect(() => {
+  //   onAuthStateChanged(auth, (user) => {
+  //     if (user) {
+  //       setUser(user);
+  //       console.log("User is signed in." + user.uid);
+  //     } else {
+  //       setUser(null);
+  //     }
+  //   });
+  // }, []);
+
   return (
     <SafeAreaView
       style={{
@@ -96,14 +131,23 @@ const RegisterScreen = ({ navigation }) => {
         <Text
           style={{
             fontSize: 28,
-            fontWeight: "500",
+            fontWeight: "normal",
             color: colors.light.tint,
             marginBottom: 30,
             textAlign: "center",
           }}
         >
-          Create an account
+          Create account on{" "}
+          <Text
+            style={{
+              fontWeight: "600",
+            }}
+          >
+            Nahor
+          </Text>
         </Text>
+
+        <Text>{user ? user : "No users"}</Text>
 
         <InputField
           selectionColor={colors.light.tint}
@@ -112,7 +156,7 @@ const RegisterScreen = ({ navigation }) => {
             <MaterialIcons
               name="alternate-email"
               size={20}
-              color="#666"
+              color={colors.light.icon}
               style={{ marginRight: 5 }}
             />
           }
@@ -127,7 +171,7 @@ const RegisterScreen = ({ navigation }) => {
             <Ionicons
               name="ios-lock-closed-outline"
               size={20}
-              color="#666"
+              color={colors.light.icon}
               style={{ marginRight: 5 }}
             />
           }
@@ -160,14 +204,12 @@ const RegisterScreen = ({ navigation }) => {
         <View
           style={{
             flexDirection: "row",
-            justifyContent: "space-between",
+            justifyContent: "space-around",
             marginBottom: 30,
           }}
         >
           <TouchableOpacity
-            onPress={() =>
-              ToastAndroid.show("Working on it.", ToastAndroid.BOTTOM)
-            }
+            onPress={() => googleAuth()}
             style={{
               backgroundColor: colors.light.secondary,
               borderRadius: 10,
@@ -181,9 +223,7 @@ const RegisterScreen = ({ navigation }) => {
             />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() =>
-              ToastAndroid.show("Working on it.", ToastAndroid.BOTTOM)
-            }
+            onPress={() => facebookAuth()}
             style={{
               backgroundColor: colors.light.secondary,
               borderRadius: 10,
@@ -192,23 +232,7 @@ const RegisterScreen = ({ navigation }) => {
             }}
           >
             <Image
-              source={require("../images/apple.png")}
-              style={{ height: 24, width: 24 }}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() =>
-              ToastAndroid.show("Working on it.", ToastAndroid.BOTTOM)
-            }
-            style={{
-              backgroundColor: colors.light.secondary,
-              borderRadius: 10,
-              paddingHorizontal: 30,
-              paddingVertical: 10,
-            }}
-          >
-            <Image
-              source={require("../images/apple.png")}
+              source={require("../images/facebook.png")}
               style={{ height: 24, width: 24 }}
             />
           </TouchableOpacity>
@@ -220,7 +244,9 @@ const RegisterScreen = ({ navigation }) => {
             marginBottom: 30,
           }}
         >
-          <Text style={{ color: colors.light.tint }}>Already registered? </Text>
+          <Text style={{ color: colors.light.tint, fontSize: 16 }}>
+            Already registered?{" "}
+          </Text>
           <TouchableOpacity onPress={() => navigation.navigate("Login")}>
             <Text style={{ color: colors.light.accent, fontWeight: "700" }}>
               {" "}

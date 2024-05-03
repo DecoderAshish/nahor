@@ -1,46 +1,73 @@
-import React, { useContext, useState } from "react";
-import { colors } from "../config/theme";
-import { ThemeContext } from "../context/ThemeContext";
+import React, { useState } from "react";
 import {
   SafeAreaView,
+  ActivityIndicator,
   View,
   Text,
   TouchableOpacity,
+  Alert,
   Image,
-  ActivityIndicator,
   ToastAndroid,
 } from "react-native";
-
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
+
+import { colors } from "../config/theme";
 import { auth, db } from "../config/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
 
 import CustomButton from "../components/CustomButton";
 import InputField from "../components/InputField";
+import { googleSignIn } from "./GoogleAuth";
 
-const LoginScreen = ({ navigation }) => {
+const RegisterScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { theme } = useContext(ThemeContext);
-  let activeColors = colors[theme.mode];
+  const [user, setUser] = useState("");
 
-  const pressLogin = () => {
+  const googleAuth = async () => {
+    console.log("Google Auth");
+    const result = await googleSignIn();
+
+    if (result) {
+      console.log("Google sign-in success:", result.params);
+    } else {
+      console.log("Google sign-in failed");
+    }
+  };
+
+  const facebookAuth = () => {
+    console.log("Facebook Auth");
+  };
+
+  const pressRegister = () => {
     setIsLoading(true);
-    signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
+    createUserWithEmailAndPassword(auth, email, password)
+      .then(async (userCredential) => {
         const user = userCredential.user;
-        ToastAndroid.show("Logged in.", ToastAndroid.LONG);
-        setIsLoading(false);
+        await setDoc(doc(db, "users", email), {
+          uid: user.uid,
+          email,
+          password,
+        })
+          .then(() => {
+            ToastAndroid.show("Account created.", ToastAndroid.LONG);
+            setIsLoading(false);
+          })
+          .catch((err) => {
+            console.log(err);
+            setIsLoading(false);
+          });
       })
       .catch((error) => {
         const errorCode = error.code;
-        if (errorCode == "auth/user-not-found") {
-          ToastAndroid.show("Email does not exist.", ToastAndroid.LONG);
-          setIsLoading(false);
-        } else if (errorCode == "auth/wrong-password") {
-          ToastAndroid.show("Password was wrong.", ToastAndroid.LONG);
+        if (errorCode == "auth/email-already-in-use") {
+          ToastAndroid.show(
+            "User already exist, Kindly login kutte.",
+            ToastAndroid.LONG
+          );
           setIsLoading(false);
         } else if (errorCode == "auth/invalid-email") {
           ToastAndroid.show("Invailid Email.", ToastAndroid.LONG);
@@ -78,7 +105,7 @@ const LoginScreen = ({ navigation }) => {
             source={require("../images/login.png")}
             style={{
               height: 200,
-              width: 300,
+              width: 200,
               transform: [{ rotate: "-5deg" }],
             }}
           />
@@ -87,13 +114,13 @@ const LoginScreen = ({ navigation }) => {
         <Text
           style={{
             fontSize: 28,
-            fontWeight: "500",
+            fontWeight: "normal",
             color: colors.light.tint,
             marginBottom: 30,
             textAlign: "center",
           }}
         >
-          Login to{" "}
+          Create account on{" "}
           <Text
             style={{
               fontWeight: "600",
@@ -132,8 +159,6 @@ const LoginScreen = ({ navigation }) => {
           onChangeText={setPassword}
           value={password}
           inputType="password"
-          fieldButtonLabel={"Forgot?"}
-          fieldButtonFunction={() => navigation.navigate("Register")}
         />
 
         <CustomButton
@@ -141,11 +166,12 @@ const LoginScreen = ({ navigation }) => {
             isLoading ? (
               <ActivityIndicator size="small" color={colors.light.primary} />
             ) : (
-              "Login"
+              "Register"
             )
           }
-          onPress={() => pressLogin()}
+          onPress={() => pressRegister()}
         />
+
         <Text
           style={{
             textAlign: "center",
@@ -153,7 +179,7 @@ const LoginScreen = ({ navigation }) => {
             marginBottom: 30,
           }}
         >
-          Or, login with...
+          Or, register with...
         </Text>
 
         <View
@@ -164,7 +190,7 @@ const LoginScreen = ({ navigation }) => {
           }}
         >
           <TouchableOpacity
-            onPress={() => {}}
+            onPress={() => googleAuth()}
             style={{
               backgroundColor: colors.light.secondary,
               borderRadius: 10,
@@ -178,7 +204,7 @@ const LoginScreen = ({ navigation }) => {
             />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => {}}
+            onPress={() => facebookAuth()}
             style={{
               backgroundColor: colors.light.secondary,
               borderRadius: 10,
@@ -192,7 +218,6 @@ const LoginScreen = ({ navigation }) => {
             />
           </TouchableOpacity>
         </View>
-
         <View
           style={{
             flexDirection: "row",
@@ -201,12 +226,12 @@ const LoginScreen = ({ navigation }) => {
           }}
         >
           <Text style={{ color: colors.light.tint, fontSize: 16 }}>
-            New on Nahor?{" "}
+            Already registered?{" "}
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
             <Text style={{ color: colors.light.accent, fontWeight: "700" }}>
               {" "}
-              Register
+              Login
             </Text>
           </TouchableOpacity>
         </View>
@@ -215,4 +240,4 @@ const LoginScreen = ({ navigation }) => {
   );
 };
 
-export default LoginScreen;
+export default RegisterScreen;

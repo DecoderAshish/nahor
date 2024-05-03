@@ -33,7 +33,7 @@ const Basket = () => {
   const navigation = useNavigation();
 
   const [user, setUser] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [basket, setBasket] = useState([]);
   const [products, setProducts] = useState([]);
   const [documentCount, setDocumentCount] = useState(0);
@@ -44,7 +44,7 @@ const Basket = () => {
 
   const getAddress = async () => {
     try {
-      const addressDocRef = doc(db, "address", user.email);
+      const addressDocRef = doc(db, "address", auth.currentUser.email);
       const addressDocSnapshot = await getDoc(addressDocRef);
 
       if (addressDocSnapshot.exists()) {
@@ -63,41 +63,38 @@ const Basket = () => {
   };
 
   const getBasket = async () => {
-    // onAuthStateChanged(auth, (authUser) => {
-    //   if (authUser) {
-    //     setUser(authUser);
-    //   } else {
-    //     console.log("User is signed out.");
-    //   }
-    // });
+    setIsLoading(true);
+    const q = query(collection(db, "users", auth.currentUser.email, "basket"));
 
-    const q = query(collection(db, "users", user.email, "basket"));
-    onSnapshot(q, async (querySnapshot) => {
+    try {
+      const querySnapshot = await getDocs(q);
       const countedDocs = querySnapshot.size;
       const basketData = querySnapshot.docs.map((doc) => doc.data());
+
       if (basketData) {
         setBasket(basketData);
         setDocumentCount(countedDocs);
-        await Promise.all(
-          basket.map(async (item) => {
-            fetch("https://indic-fusion.vercel.app/api/products")
-              .then((response) => response.json())
-              .then((data) => {
-                setProducts(data);
-                setIsLoading(false);
-              })
-              .catch((error) => {
-                ToastAndroid.show(error, ToastAndroid.SHORT);
-                setIsLoading(false);
-              });
+
+        fetch("https://indic-fusion.vercel.app/api/products")
+          .then((response) => response.json())
+          .then((data) => {
+            setProducts(data);
+            setIsLoading(false);
           })
-        );
+          .catch((error) => {
+            ToastAndroid.show(error, ToastAndroid.SHORT);
+          });
       }
-    });
+    } catch (error) {
+      console.error("Error fetching basket data:", error.message);
+    }
   };
 
   const deleteProduct = async (pId) => {
-    const subCollRef = collection(db, "users/" + user.email + "/basket/");
+    const subCollRef = collection(
+      db,
+      "users/" + auth.currentUser.email + "/basket/"
+    );
     await deleteDoc(doc(subCollRef, "product" + pId))
       .then(() => {
         ToastAndroid.show("Removed from basket.", ToastAndroid.BOTTOM);
@@ -108,13 +105,14 @@ const Basket = () => {
       });
   };
 
-  const placeOrder = async () => {
-    // navigation.navigate("Payment", {
-    //   paymentSignedUrl:
-    //     "https://test.instamojo.com/@rahul_sharma_d558e/27dd4d4aae284d6fa72e64db43d7f142",
-    // });
+  // navigation.navigate("Payment", {
+  //   paymentSignedUrl:
+  //     "https://test.instamojo.com/@rahul_sharma_d558e/27dd4d4aae284d6fa72e64db43d7f142",
+  // });
 
-    const subCollRef = collection(db, "users", user.email, "basket");
+  const placeOrder = async () => {
+    const subCollPath = ["users", auth.currentUser.email, "basket"];
+    const subCollRef = collection(db, ...subCollPath);
 
     const querySnapshot = await getDocs(subCollRef);
 
@@ -124,7 +122,7 @@ const Basket = () => {
 
     await Promise.all(deletePromises);
 
-    deleteField(doc(collection(db, "users", user.email)), "basket");
+    deleteField(doc(collection(db, ...subCollPath)), "basket");
 
     ToastAndroid.show("Order Placed.", ToastAndroid.BOTTOM);
     getBasket();
@@ -138,17 +136,8 @@ const Basket = () => {
   };
 
   useEffect(() => {
-    onAuthStateChanged(auth, (authUser) => {
-      if (authUser) {
-        setUser(authUser);
-        getBasket();
-        getAddress();
-      } else {
-        console.log("User is signed out.");
-      }
-    });
-
-    onRefresh();
+    getBasket();
+    getAddress();
   }, []);
 
   if (isLoading) {
@@ -253,146 +242,148 @@ const Basket = () => {
               </View>
             )}
           </View>
-          {basket.map((bItem, id) => (
-            <View key={id}>
-              {products.map((item, id) =>
-                bItem.productId == item._id ? (
-                  <View
-                    key={id}
-                    style={{
-                      width: "100%",
-                      height: 200,
-                      paddingVertical: 5,
-                      paddingHorizontal: 15,
-                      marginVertical: 5,
-                      backgroundColor: colors.light.primary,
-                      flexDirection: "row",
-                      justifyContent: "flex-start",
-                    }}
-                  >
-                    <TouchableOpacity
-                      onPress={() =>
-                        navigation.navigate("Product", {
-                          title: item.productName,
-                          pId: item._id,
-                        })
-                      }
-                      style={{
-                        width: "35%",
-                        height: 180,
-                      }}
-                    >
-                      <Image
-                        style={styles.image}
-                        // source={{ uri: item.imageURL }}
-                        source={require("../images/decors/decor3.jpeg")}
-                      />
-                    </TouchableOpacity>
+          {basket &&
+            products &&
+            basket.map((bItem, id) => (
+              <View key={id}>
+                {products.map((item, id) =>
+                  bItem.productId == item._id ? (
                     <View
+                      key={id}
                       style={{
-                        width: "65%",
-                        paddingHorizontal: 10,
-                        alignContent: "flex-start",
+                        width: "100%",
+                        height: 200,
+                        paddingVertical: 5,
+                        paddingHorizontal: 15,
+                        marginVertical: 5,
+                        backgroundColor: colors.light.primary,
+                        flexDirection: "row",
+                        justifyContent: "flex-start",
                       }}
                     >
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate("Product", {
+                            title: item.productName,
+                            pId: item._id,
+                          })
+                        }
+                        style={{
+                          width: "35%",
+                          height: 180,
+                        }}
+                      >
+                        <Image
+                          style={styles.image}
+                          // source={{ uri: item.imageURL }}
+                          source={require("../images/decors/decor3.jpeg")}
+                        />
+                      </TouchableOpacity>
                       <View
                         style={{
-                          marginBottom: 5,
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
+                          width: "65%",
+                          paddingHorizontal: 10,
+                          alignContent: "flex-start",
                         }}
                       >
-                        <Text style={{ fontSize: 16, fontWeight: "600" }}>
-                          {item.productName}
-                        </Text>
-                        <Ionicons
-                          name="trash-outline"
-                          size={15}
-                          color="black"
-                          onPress={() => deleteProduct(item._id)}
-                        />
-                      </View>
-                      <Text numberOfLines={3} style={{ fontSize: 12 }}>
-                        {item.productCartDesc}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: colors.light.gray,
-                          marginVertical: 3,
-                        }}
-                      >
-                        BRAND:{" "}
-                        <Text style={{ color: colors.light.text }}>
-                          {item.brand}
-                        </Text>
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: "600",
-                          color: colors.light.red,
-                          marginVertical: 2,
-                        }}
-                      >
-                        ₹{item.finalPrice}{" "}
-                        <Text
+                        <View
                           style={{
-                            color: colors.light.text,
-                            textDecorationLine: "line-through",
+                            marginBottom: 5,
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
                           }}
                         >
-                          ₹
-                          {parseFloat(
-                            (item.finalPrice * item.finalPrice) / 100 +
-                              item.finalPrice
-                          ).toFixed(2)}
+                          <Text style={{ fontSize: 16, fontWeight: "600" }}>
+                            {item.productName}
+                          </Text>
+                          <Ionicons
+                            name="trash-outline"
+                            size={15}
+                            color="black"
+                            onPress={() => deleteProduct(item._id)}
+                          />
+                        </View>
+                        <Text numberOfLines={3} style={{ fontSize: 12 }}>
+                          {item.productCartDesc}
                         </Text>
-                        {parseInt(item.productStock)}% Off
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          fontWeight: "600",
-                          color: colors.light.text,
-                          marginVertical: 3,
-                        }}
-                      >
-                        14 Days{" "}
                         <Text
                           style={{
+                            fontSize: 12,
                             color: colors.light.gray,
-                            fontWeight: "normal",
+                            marginVertical: 3,
                           }}
                         >
-                          return available
+                          BRAND:{" "}
+                          <Text style={{ color: colors.light.text }}>
+                            {item.brand}
+                          </Text>
                         </Text>
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          fontWeight: "normal",
-                          color: colors.light.gray,
-                          marginVertical: 3,
-                        }}
-                      >
-                        Delivery by:{" "}
                         <Text
                           style={{
-                            color: colors.light.text,
+                            fontSize: 14,
                             fontWeight: "600",
+                            color: colors.light.red,
+                            marginVertical: 2,
                           }}
                         >
-                          30 August
+                          ₹{item.finalPrice}{" "}
+                          <Text
+                            style={{
+                              color: colors.light.text,
+                              textDecorationLine: "line-through",
+                            }}
+                          >
+                            ₹
+                            {parseFloat(
+                              (item.finalPrice * item.finalPrice) / 100 +
+                                item.finalPrice
+                            ).toFixed(2)}
+                          </Text>
+                          {parseInt(item.productStock)}% Off
                         </Text>
-                      </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: "600",
+                            color: colors.light.text,
+                            marginVertical: 3,
+                          }}
+                        >
+                          14 Days{" "}
+                          <Text
+                            style={{
+                              color: colors.light.gray,
+                              fontWeight: "normal",
+                            }}
+                          >
+                            return available
+                          </Text>
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: "normal",
+                            color: colors.light.gray,
+                            marginVertical: 3,
+                          }}
+                        >
+                          Delivery by:{" "}
+                          <Text
+                            style={{
+                              color: colors.light.text,
+                              fontWeight: "600",
+                            }}
+                          >
+                            30 August
+                          </Text>
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                ) : null
-              )}
-            </View>
-          ))}
+                  ) : null
+                )}
+              </View>
+            ))}
           {documentCount != 0 ? (
             <View
               style={{
@@ -484,7 +475,26 @@ const Basket = () => {
                 </Text>
               </View>
             </View>
-          ) : null}
+          ) : (
+            <View
+              style={{
+                width: "100%",
+                paddingVertical: 5,
+                paddingHorizontal: 15,
+                marginVertical: 5,
+                backgroundColor: colors.light.primary,
+              }}
+            >
+              <Text
+                style={{ fontSize: 18, fontWeight: "600", textAlign: "center" }}
+              >
+                {documentCount}{" "}
+                <Text style={{ fontWeight: "normal" }}>
+                  items in your Basket
+                </Text>
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
       <View style={styles.bottom}>

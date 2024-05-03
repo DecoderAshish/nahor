@@ -30,60 +30,48 @@ const screenHeight = Dimensions.get("screen").height;
 const Wishlish = () => {
   const navigation = useNavigation();
 
-  const [user, setUser] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [wishlist, setWishlist] = useState([]);
   const [products, setProducts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = () => {
     setRefreshing(true);
-    getWishlist(user.email);
+    getWishlist();
     setRefreshing(false);
   };
 
-  const getWishlist = async (email) => {
-    onAuthStateChanged(auth, (authUser) => {
-      if (authUser) {
-        setUser(authUser);
-      } else {
-        console.log("User is signed out.");
-      }
-    });
-
-    const q = query(collection(db, "users", email, "wishlist"));
+  const getWishlist = async () => {
+    setIsLoading(true);
+    const q = query(
+      collection(db, "users", auth.currentUser.email, "wishlist")
+    );
     onSnapshot(q, async (querySnapshot) => {
       const wishlistData = querySnapshot.docs.map((doc) => doc.data());
       if (wishlistData) {
         setWishlist(wishlistData);
-
-        const productItems = [];
-        await Promise.all(
-          wishlist.map(async (item) => {
-            fetch("https://indic-fusion.vercel.app/api/products")
-              .then((response) => response.json())
-              .then((data) => {
-                setProducts(data);
-                setIsLoading(false);
-              })
-              .catch((error) => {
-                ToastAndroid.show(error, ToastAndroid.SHORT);
-                setIsLoading(false);
-              });
+        fetch("https://indic-fusion.vercel.app/api/products")
+          .then((response) => response.json())
+          .then((data) => {
+            setProducts(data);
+            setIsLoading(false);
           })
-        );
-        setProducts(productItems);
-        setIsLoading(false);
+          .catch((error) => {
+            ToastAndroid.show(error, ToastAndroid.SHORT);
+          });
       }
     });
   };
 
   const deleteProduct = async (pId) => {
-    const subCollRef = collection(db, "users/" + user.email + "/wishlist/");
+    const subCollRef = collection(
+      db,
+      "users/" + auth.currentUser.email + "/wishlist/"
+    );
     await deleteDoc(doc(subCollRef, "product" + pId))
       .then(() => {
         ToastAndroid.show("Removed from wishlist.", ToastAndroid.BOTTOM);
-        getWishlist(user.email);
+        getWishlist();
       })
       .catch((err) => {
         ToastAndroid.show("Something went wrong.", ToastAndroid.BOTTOM);
@@ -91,28 +79,20 @@ const Wishlish = () => {
   };
 
   useEffect(() => {
-    onAuthStateChanged(auth, (authUser) => {
-      if (authUser) {
-        setUser(authUser);
-        getWishlist(authUser.email);
-      } else {
-        console.log("User is signed out.");
-      }
-    });
-    onRefresh();
+    getWishlist();
   }, []);
 
   if (isLoading) {
-    return (
-      <ActivityIndicator
-        size="large"
-        color={colors.light.pink}
-        style={[
-          styles.loadingIndicator,
-          { backgroundColor: colors.light.primary },
-        ]}
-      />
-    );
+    // return (
+    //   <ActivityIndicator
+    //     size="large"
+    //     color={colors.light.pink}
+    //     style={[
+    //       styles.loadingIndicator,
+    //       { backgroundColor: colors.light.primary },
+    //     ]}
+    //   />
+    // );
   }
 
   return (

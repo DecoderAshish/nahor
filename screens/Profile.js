@@ -46,7 +46,7 @@ const Profile = () => {
           marginBottom: 20,
         }}
       >
-        {user.email}
+        {auth.currentUser.email}
       </Text>
       <TouchableOpacity
         onPress={() => handleLogout()}

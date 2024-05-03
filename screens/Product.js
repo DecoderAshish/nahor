@@ -124,9 +124,9 @@ const Product = ({ route }) => {
 
   useEffect(() => {
     AWS.config.update({
-      accessKeyId: "***************",
-      secretAccessKey: "****************",
-      region: "*************",
+      accessKeyId: "AKIAZLRNTB3H7QGOH4VB",
+      secretAccessKey: "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",
+      region: "ap-south-1",
     });
 
     const url = s3.getSignedUrl("getObject", {

@@ -31,7 +31,7 @@ export default function InputField({
         <TextInput
           placeholderTextColor={colors.light.text}
           placeholder={label}
-          keyboardAppearance={colors.light.primary}
+          keyboardAppearance="default"
           keyboardType={keyboardType}
           style={{ flex: 1, paddingVertical: 0, color: colors.light.tint }}
           secureTextEntry={true}
@@ -44,7 +44,7 @@ export default function InputField({
         <TextInput
           placeholderTextColor={colors.light.text}
           placeholder={label}
-          keyboardAppearance={colors.light.primary}
+          keyboardAppearance="default"
           keyboardType={keyboardType}
           onChangeText={onChangeText}
           value={value}

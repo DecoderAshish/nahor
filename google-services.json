@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_number": "333100533712",
+    "firebase_url": "https://messenger-q-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "messenger-q",
+    "storage_bucket": "messenger-q.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:333100533712:android:f7e3138f4cfdb338e31bd5",
+        "android_client_info": {
+          "package_name": "com.decoderashish.naahar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "333100533712-heca37jrd6mmg45g2u888ndcrlnoumdk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.decoderashish.naahar",
+            "certificate_hash": "60b477ececf4f069b7772e515573d7ff12880566"
+          }
+        },
+        {
+          "client_id": "333100533712-qgfuihd85hvgqetcaot7g73ghvejhl4u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.decoderashish.naahar",
+            "certificate_hash": "631d016bb25b13c9e53fc92cbd5450d5e5e6ad6e"
+          }
+        },
+        {
+          "client_id": "333100533712-1b0lq975alnqoq0ugjbji1cps26in40v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZxlQ_nqBC6UE8cc_EkFcMCgmg7p_Sn9o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "333100533712-1b0lq975alnqoq0ugjbji1cps26in40v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

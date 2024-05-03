@@ -1,4 +1,4 @@
-import { Appearance, ActivityIndicator } from "react-native";
+import { Appearance, ActivityIndicator, Linking } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import React, { useState, useContext, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -23,6 +23,10 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [theme, setTheme] = useState({ mode: Appearance.getColorScheme() });
   let activeColors = colors[theme.mode];
+
+  const linking = {
+    prefixes: ["nahor://"],
+  };
 
   const updateTheme = (newTheme) => {
     let mode;
@@ -84,7 +88,7 @@ const App = () => {
 
   return (
     <ThemeContext.Provider value={{ theme, updateTheme }}>
-      <NavigationContainer>
+      <NavigationContainer linking={linking}>
         <Stack.Navigator initialRouteName="Navigation">
           {user ? (
             <Stack.Screen
